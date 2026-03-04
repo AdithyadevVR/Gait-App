@@ -16,6 +16,13 @@ class SensorData {
   final double gy;
   final double gz;
 
+  final int leftSteps;
+  final int rightSteps;
+  final double leftStepTime;
+  final double rightStepTime;
+  final double leftCadence;
+  final double rightCadence;
+
   SensorData({
     required this.leftHeelKg,
     required this.leftBallKg,
@@ -29,6 +36,12 @@ class SensorData {
     required this.gx,
     required this.gy,
     required this.gz,
+    required this.leftSteps,
+    required this.rightSteps,
+    required this.leftStepTime,
+    required this.rightStepTime,
+    required this.leftCadence,
+    required this.rightCadence,
   });
 
   // Calculate pitch deviation (Forward Tilt)
@@ -62,6 +75,14 @@ class SensorData {
     double gy        = double.tryParse(parts[10].trim()) ?? 0;
     double gz        = double.tryParse(parts[11].trim()) ?? 0;
 
+    // Optional extended gait metrics, if present in the packet
+    int leftSteps       = parts.length > 12 ? int.tryParse(parts[12].trim()) ?? 0 : 0;
+    int rightSteps      = parts.length > 13 ? int.tryParse(parts[13].trim()) ?? 0 : 0;
+    double leftStepTime = parts.length > 14 ? double.tryParse(parts[14].trim()) ?? 0 : 0;
+    double rightStepTime= parts.length > 15 ? double.tryParse(parts[15].trim()) ?? 0 : 0;
+    double leftCadence  = parts.length > 16 ? double.tryParse(parts[16].trim()) ?? 0 : 0;
+    double rightCadence = parts.length > 17 ? double.tryParse(parts[17].trim()) ?? 0 : 0;
+
     print('RightHeel parsed: ' + rightHeel.toString());
     print('RightBall parsed: ' + rightBall.toString());
 
@@ -78,6 +99,12 @@ class SensorData {
       gx: gx,
       gy: gy,
       gz: gz,
+      leftSteps: leftSteps,
+      rightSteps: rightSteps,
+      leftStepTime: leftStepTime,
+      rightStepTime: rightStepTime,
+      leftCadence: leftCadence,
+      rightCadence: rightCadence,
     );
   }
 }
