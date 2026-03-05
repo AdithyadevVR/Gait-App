@@ -1,11 +1,13 @@
 import 'package:flutter/material.dart';
+import 'package:google_fonts/google_fonts.dart';
 import '../models/sensor_data.dart';
 import '../services/websocket_service.dart';
-import '../widgets/foot_pressure_panel.dart';
+import '../theme/dashboard_theme.dart';
+import '../widgets/foot_heatmap_widget.dart';
 import '../widgets/foot_pressure_summary.dart';
-import '../widgets/foot_strike_panel.dart';
-import '../widgets/gait_metrics_panel.dart';
 import '../widgets/imu_panel.dart';
+import '../widgets/metric_card.dart';
+import '../widgets/sensor_data_card.dart';
 import '../widgets/warnings_panel.dart';
 import 'login_screen.dart';
 
@@ -30,57 +32,68 @@ class _DashboardScreenState extends State<DashboardScreen> {
         _navigateBack();
       },
       child: Scaffold(
-        backgroundColor: Theme.of(context).colorScheme.surface,
-        appBar: AppBar(
-          elevation: 0,
-          centerTitle: false,
-          titleSpacing: 16,
-          title: Column(
-            crossAxisAlignment: CrossAxisAlignment.start,
-            children: [
-              const Text('Gait Analysis'),
-              Text(
-                'Real-time biomechanics dashboard',
-                style: Theme.of(context).textTheme.bodySmall?.copyWith(
-                      color: Theme.of(context).colorScheme.onSurfaceVariant,
-                    ),
-              ),
-            ],
+        backgroundColor: DashboardTheme.surfaceDark,
+        body: Container(
+          decoration: const BoxDecoration(
+            gradient: DashboardTheme.backgroundGradient,
           ),
-          leading: IconButton(
-            icon: const Icon(Icons.arrow_back),
-            onPressed: _navigateBack,
+          child: SafeArea(
+            child: Column(
+              children: [
+                _buildHeader(context),
+                Expanded(
+                  child: StreamBuilder<SensorData>(
+                    stream: widget.webSocketService.dataStream,
+                    builder: (context, snapshot) {
+                      if (snapshot.hasData) _latestData = snapshot.data;
+                      if (_latestData == null) return _buildLoadingState();
+                      return _buildDashboardContent(context, _latestData!);
+                    },
+                  ),
+                ),
+              ],
+            ),
           ),
-          actions: [
-            _buildConnectionStatus(),
-          ],
-        ),
-        body: StreamBuilder<SensorData>(
-          stream: widget.webSocketService.dataStream,
-          builder: (context, snapshot) {
-            if (snapshot.hasData) {
-              _latestData = snapshot.data;
-            }
-
-            if (_latestData == null) {
-              return _buildLoadingState();
-            }
-
-            return _buildDashboardContent(context, _latestData!);
-          },
         ),
       ),
     );
   }
 
-  void _navigateBack() {
-    widget.webSocketService.disconnect();
-    Navigator.pushReplacement(
-      context,
-      MaterialPageRoute(
-        builder: (context) => LoginScreen(
-          webSocketService: widget.webSocketService,
-        ),
+  Widget _buildHeader(BuildContext context) {
+    return Padding(
+      padding: const EdgeInsets.fromLTRB(20, 16, 20, 12),
+      child: Row(
+        children: [
+          IconButton(
+            icon: Icon(Icons.arrow_back, color: Colors.white.withOpacity(0.9)),
+            onPressed: _navigateBack,
+          ),
+          const SizedBox(width: 8),
+          Expanded(
+            child: Column(
+              crossAxisAlignment: CrossAxisAlignment.start,
+              children: [
+                Text(
+                  'Gait Analysis Dashboard',
+                  style: GoogleFonts.inter(
+                    fontSize: 22,
+                    fontWeight: FontWeight.w700,
+                    color: Colors.white,
+                  ),
+                ),
+                const SizedBox(height: 2),
+                Text(
+                  'Real-time biomechanics monitoring',
+                  style: GoogleFonts.inter(
+                    fontSize: 13,
+                    color: Colors.white.withOpacity(0.5),
+                  ),
+                ),
+              ],
+            ),
+          ),
+          _buildConnectionStatus(),
+        ],
       ),
     );
   }
@@ -90,39 +103,49 @@ class _DashboardScreenState extends State<DashboardScreen> {
       stream: widget.webSocketService.statusStream,
       builder: (context, snapshot) {
         final status = snapshot.data ?? ConnectionStatus.disconnected;
-        Color statusColor;
-        IconData statusIcon;
-
+        Color color;
+        IconData icon;
         switch (status) {
           case ConnectionStatus.connected:
-            statusColor = Colors.greenAccent;
-            statusIcon = Icons.wifi;
+            color = DashboardTheme.accentGreen;
+            icon = Icons.wifi;
             break;
           case ConnectionStatus.connecting:
-            statusColor = Colors.orangeAccent;
-            statusIcon = Icons.wifi_find;
+            color = DashboardTheme.accentYellow;
+            icon = Icons.wifi_find;
             break;
-          case ConnectionStatus.disconnected:
-          case ConnectionStatus.error:
           default:
-            statusColor = Colors.redAccent;
-            statusIcon = Icons.wifi_off;
-            break;
+            color = DashboardTheme.accentRed;
+            icon = Icons.wifi_off;
         }
-
-        return Padding(
-          padding: const EdgeInsets.only(right: 16.0),
+        return Container(
+          padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
+          decoration: BoxDecoration(
+            color: color.withOpacity(0.15),
+            borderRadius: BorderRadius.circular(999),
+            border: Border.all(color: color.withOpacity(0.5)),
+            boxShadow: status == ConnectionStatus.connected
+                ? [
+                    BoxShadow(
+                      color: color.withOpacity(0.3),
+                      blurRadius: 8,
+                      spreadRadius: 0,
+                    ),
+                  ]
+                : null,
+          ),
           child: Row(
+            mainAxisSize: MainAxisSize.min,
             children: [
-              Icon(statusIcon, color: statusColor, size: 20),
+              Icon(icon, color: color, size: 18),
               const SizedBox(width: 8),
               Text(
                 status.name.toUpperCase(),
-                style: TextStyle(
-                  color: statusColor,
-                  fontWeight: FontWeight.bold,
-                  fontSize: 12,
+                style: GoogleFonts.inter(
+                  fontSize: 11,
+                  fontWeight: FontWeight.w700,
                   letterSpacing: 1.2,
+                  color: color,
                 ),
               ),
             ],
@@ -137,15 +160,21 @@ class _DashboardScreenState extends State<DashboardScreen> {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          CircularProgressIndicator(
-            color: Theme.of(context).colorScheme.primary,
+          SizedBox(
+            width: 48,
+            height: 48,
+            child: CircularProgressIndicator(
+              strokeWidth: 3,
+              valueColor: AlwaysStoppedAnimation<Color>(DashboardTheme.accentCyan),
+            ),
           ),
           const SizedBox(height: 24),
           Text(
             'Waiting for sensor data...',
-            style: Theme.of(context).textTheme.titleMedium?.copyWith(
-                  color: Theme.of(context).colorScheme.onSurfaceVariant,
-                ),
+            style: GoogleFonts.inter(
+              fontSize: 16,
+              color: Colors.white.withOpacity(0.6),
+            ),
           ),
         ],
       ),
@@ -155,143 +184,220 @@ class _DashboardScreenState extends State<DashboardScreen> {
   Widget _buildDashboardContent(BuildContext context, SensorData data) {
     return LayoutBuilder(
       builder: (context, constraints) {
-        final bool isWideScreen = constraints.maxWidth > 800;
+        final isWide = constraints.maxWidth > 900;
 
-        if (isWideScreen) {
+        if (isWide) {
           return SingleChildScrollView(
-            padding: const EdgeInsets.all(24.0),
-            child: Row(
-              crossAxisAlignment: CrossAxisAlignment.start,
-              children: [
-                Expanded(
-                  flex: 6,
-                  child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.stretch,
-                    children: [
-                      Row(
-                        children: [
-                          Expanded(
-                            child: FootPressurePanel(
-                              title: 'LEFT FOOT',
-                              heelKg: data.leftHeelKg,
-                              ballKg: data.leftBallKg,
-                              toeKg: data.leftToeKg,
-                            ),
-                          ),
-                          const SizedBox(width: 24),
-                          Expanded(
-                            child: FootPressurePanel(
-                              title: 'RIGHT FOOT',
-                              heelKg: data.rightHeelKg,
-                              ballKg: data.rightBallKg,
-                              toeKg: data.rightToeKg,
-                              isRightFoot: true,
-                            ),
-                          ),
-                        ],
-                      ),
-                      const SizedBox(height: 16),
-                      FootPressureSummary(
-                        leftPressure: data.leftPressure,
-                        rightPressure: data.rightPressure,
-                        leftPressurePercent: data.leftPressurePercent,
-                        rightPressurePercent: data.rightPressurePercent,
-                      ),
-                      const SizedBox(height: 16),
-                      GaitMetricsPanel(
-                        leftStepCount: data.leftSteps,
-                        rightStepCount: data.rightSteps,
-                        leftStepTime: data.leftStepTime,
-                        rightStepTime: data.rightStepTime,
-                        leftCadence: data.leftCadence,
-                        rightCadence: data.rightCadence,
-                        stepSymmetry: data.stepSymmetry,
-                      ),
-                      const SizedBox(height: 16),
-                      FootStrikePanel(
-                        leftHeelRatio: data.leftHeelRatio,
-                        leftBallRatio: data.leftBallRatio,
-                        leftToeRatio: data.leftToeRatio,
-                        rightHeelRatio: data.rightHeelRatio,
-                        rightBallRatio: data.rightBallRatio,
-                        rightToeRatio: data.rightToeRatio,
-                      ),
-                      const SizedBox(height: 16),
-                      WarningsPanel(warnings: data.gaitWarnings),
-                    ],
-                  ),
-                ),
-                const SizedBox(width: 24),
-                Expanded(
-                  flex: 4,
-                  child: Column(
-                    children: [
-                      ImuPanel(
-                        pitch: data.pitchDeviation,
-                        roll: data.rollDeviation,
-                        ax: data.ax,
-                        ay: data.ay,
-                        az: data.az,
-                        gx: data.gx,
-                        gy: data.gy,
-                        gz: data.gz,
-                      ),
-                    ],
-                  ),
-                ),
-              ],
-            ),
-          );
-        } else {
-          return SingleChildScrollView(
-            padding: const EdgeInsets.all(16.0),
+            padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 12),
             child: Column(
               crossAxisAlignment: CrossAxisAlignment.stretch,
               children: [
-                FootPressurePanel(
-                  title: 'LEFT FOOT',
-                  heelKg: data.leftHeelKg,
-                  ballKg: data.leftBallKg,
-                  toeKg: data.leftToeKg,
+                _buildMainRow(data),
+                const SizedBox(height: 20),
+                _buildBottomRow(data),
+                const SizedBox(height: 24),
+              ],
+            ),
+          );
+        }
+
+        return SingleChildScrollView(
+          padding: const EdgeInsets.symmetric(horizontal: 16, vertical: 12),
+          child: Column(
+            crossAxisAlignment: CrossAxisAlignment.stretch,
+            children: [
+              _buildMainColumn(data),
+              const SizedBox(height: 20),
+              _buildBottomRow(data),
+              const SizedBox(height: 24),
+            ],
+          ),
+        );
+      },
+    );
+  }
+
+  Widget _buildMainRow(SensorData data) {
+    return Row(
+      crossAxisAlignment: CrossAxisAlignment.start,
+      children: [
+        Expanded(
+          flex: 3,
+          child: _buildHeatmapCard('Left foot', data.leftHeelKg, data.leftBallKg, data.leftToeKg, false),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 3,
+          child: _buildCenterMetrics(data),
+        ),
+        const SizedBox(width: 16),
+        Expanded(
+          flex: 3,
+          child: _buildHeatmapCard('Right foot', data.rightHeelKg, data.rightBallKg, data.rightToeKg, true),
+        ),
+      ],
+    );
+  }
+
+  Widget _buildMainColumn(SensorData data) {
+    return Column(
+      children: [
+        Row(
+          children: [
+            Expanded(
+              child: _buildHeatmapCard('Left foot', data.leftHeelKg, data.leftBallKg, data.leftToeKg, false),
+            ),
+            const SizedBox(width: 12),
+            Expanded(
+              child: _buildHeatmapCard('Right foot', data.rightHeelKg, data.rightBallKg, data.rightToeKg, true),
+            ),
+          ],
+        ),
+        const SizedBox(height: 16),
+        _buildCenterMetrics(data),
+      ],
+    );
+  }
+
+  Widget _buildHeatmapCard(String title, double heel, double ball, double toe, bool isRight) {
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: DashboardTheme.glassCard(borderRadius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            title.toUpperCase(),
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+              color: Colors.white.withOpacity(0.7),
+            ),
+          ),
+          const SizedBox(height: 12),
+          SizedBox(
+            height: 220,
+            child: Center(
+              child: AspectRatio(
+                aspectRatio: 2 / 5,
+                child: FootHeatmapWidget(
+                  heelKg: heel,
+                  ballKg: ball,
+                  toeKg: toe,
+                  isRightFoot: isRight,
                 ),
-                const SizedBox(height: 16),
-                FootPressurePanel(
-                  title: 'RIGHT FOOT',
-                  heelKg: data.rightHeelKg,
-                  ballKg: data.rightBallKg,
-                  toeKg: data.rightToeKg,
-                  isRightFoot: true,
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildCenterMetrics(SensorData data) {
+    final avgCadence = (data.leftCadence + data.rightCadence) / 2;
+    final leftPct = (data.leftPressurePercent * 100).round().clamp(0, 100);
+    final rightPct = 100 - leftPct;
+
+    return Container(
+      padding: const EdgeInsets.all(16),
+      decoration: DashboardTheme.glassCard(borderRadius: 20),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          Text(
+            'Step count',
+            style: GoogleFonts.inter(
+              fontSize: 11,
+              fontWeight: FontWeight.w600,
+              letterSpacing: 1.2,
+              color: Colors.white.withOpacity(0.5),
+            ),
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  label: 'Left steps',
+                  value: '${data.leftSteps}',
+                  icon: Icons.directions_walk,
+                  accentColor: DashboardTheme.accentCyan,
                 ),
-                const SizedBox(height: 16),
-                FootPressureSummary(
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: MetricCard(
+                  label: 'Right steps',
+                  value: '${data.rightSteps}',
+                  icon: Icons.directions_walk,
+                  accentColor: DashboardTheme.accentPurple,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Row(
+            children: [
+              Expanded(
+                child: MetricCard(
+                  label: 'Cadence',
+                  value: avgCadence.toStringAsFixed(0),
+                  unit: 'spm',
+                  icon: Icons.speed,
+                  accentColor: DashboardTheme.accentGreen,
+                ),
+              ),
+              const SizedBox(width: 10),
+              Expanded(
+                child: MetricCard(
+                  label: 'Step timing',
+                  value: data.stepSymmetry.toStringAsFixed(2),
+                  unit: 's diff',
+                  icon: Icons.timelapse,
+                  accentColor: DashboardTheme.accentYellow,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          MetricCard(
+            label: 'Pressure balance',
+            value: '$leftPct% L / $rightPct% R',
+            accentColor: DashboardTheme.accentBlue,
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBottomRow(SensorData data) {
+    return LayoutBuilder(
+      builder: (context, constraints) {
+        final isWide = constraints.maxWidth > 700;
+        if (isWide) {
+          return Row(
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Expanded(
+                flex: 2,
+                child: FootPressureSummary(
                   leftPressure: data.leftPressure,
                   rightPressure: data.rightPressure,
                   leftPressurePercent: data.leftPressurePercent,
                   rightPressurePercent: data.rightPressurePercent,
                 ),
-                const SizedBox(height: 16),
-                GaitMetricsPanel(
-                  leftStepCount: data.leftSteps,
-                  rightStepCount: data.rightSteps,
-                  leftStepTime: data.leftStepTime,
-                  rightStepTime: data.rightStepTime,
-                  leftCadence: data.leftCadence,
-                  rightCadence: data.rightCadence,
-                  stepSymmetry: data.stepSymmetry,
-                ),
-                const SizedBox(height: 16),
-                FootStrikePanel(
-                  leftHeelRatio: data.leftHeelRatio,
-                  leftBallRatio: data.leftBallRatio,
-                  leftToeRatio: data.leftToeRatio,
-                  rightHeelRatio: data.rightHeelRatio,
-                  rightBallRatio: data.rightBallRatio,
-                  rightToeRatio: data.rightToeRatio,
-                ),
-                const SizedBox(height: 16),
-                WarningsPanel(warnings: data.gaitWarnings),
-                const SizedBox(height: 16),
-                ImuPanel(
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 2,
+                child: WarningsPanel(warnings: data.gaitWarnings),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                flex: 3,
+                child: ImuPanel(
                   pitch: data.pitchDeviation,
                   roll: data.rollDeviation,
                   ax: data.ax,
@@ -301,12 +407,46 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   gy: data.gy,
                   gz: data.gz,
                 ),
-                const SizedBox(height: 32),
-              ],
-            ),
+              ),
+            ],
           );
         }
+        return Column(
+          children: [
+            FootPressureSummary(
+              leftPressure: data.leftPressure,
+              rightPressure: data.rightPressure,
+              leftPressurePercent: data.leftPressurePercent,
+              rightPressurePercent: data.rightPressurePercent,
+            ),
+            const SizedBox(height: 16),
+            WarningsPanel(warnings: data.gaitWarnings),
+            const SizedBox(height: 16),
+            ImuPanel(
+              pitch: data.pitchDeviation,
+              roll: data.rollDeviation,
+              ax: data.ax,
+              ay: data.ay,
+              az: data.az,
+              gx: data.gx,
+              gy: data.gy,
+              gz: data.gz,
+            ),
+          ],
+        );
       },
+    );
+  }
+
+  void _navigateBack() {
+    widget.webSocketService.disconnect();
+    Navigator.pushReplacement(
+      context,
+      MaterialPageRoute(
+        builder: (context) => LoginScreen(
+          webSocketService: widget.webSocketService,
+        ),
+      ),
     );
   }
 }

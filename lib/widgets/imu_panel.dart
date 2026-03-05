@@ -1,5 +1,6 @@
 import 'package:flutter/material.dart';
-import 'sensor_card.dart';
+import '../theme/dashboard_theme.dart';
+import 'sensor_data_card.dart';
 
 class ImuPanel extends StatelessWidget {
   final double pitch;
@@ -25,12 +26,9 @@ class ImuPanel extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return SensorCard(
-      title: 'Motion & IMU',
-      subtitle: 'Orientation, acceleration and angular velocity',
+    return SensorDataCard(
+      title: 'IMU motion',
+      subtitle: 'Orientation, acceleration, gyroscope',
       icon: Icons.sensors,
       trailing: _buildPostureChip(context),
       child: Column(
@@ -44,7 +42,7 @@ class ImuPanel extends StatelessWidget {
                   label: 'Pitch',
                   value: pitch,
                   icon: Icons.swap_vert,
-                  color: Colors.tealAccent,
+                  color: DashboardTheme.accentCyan,
                 ),
               ),
               const SizedBox(width: 12),
@@ -54,7 +52,7 @@ class ImuPanel extends StatelessWidget {
                   label: 'Roll',
                   value: roll,
                   icon: Icons.swap_horiz,
-                  color: Colors.pinkAccent,
+                  color: DashboardTheme.accentPurple,
                 ),
               ),
             ],
@@ -62,49 +60,41 @@ class ImuPanel extends StatelessWidget {
           const SizedBox(height: 16),
           Text(
             'Accelerometer (g)',
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
           ),
           const SizedBox(height: 8),
-          _buildAxisRow(context, 'A', ax, ay, az, accent: Colors.lightBlueAccent),
+          _buildAxisRow(context, 'A', ax, ay, az, accent: DashboardTheme.accentCyan),
           const SizedBox(height: 16),
           Text(
             'Gyroscope (°/s)',
-            style: theme.textTheme.labelLarge?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: TextStyle(fontSize: 12, color: Colors.white.withOpacity(0.5)),
           ),
           const SizedBox(height: 8),
-          _buildAxisRow(context, 'G', gx, gy, gz, accent: Colors.amberAccent),
+          _buildAxisRow(context, 'G', gx, gy, gz, accent: DashboardTheme.accentYellow),
         ],
       ),
     );
   }
 
   Widget _buildPostureChip(BuildContext context) {
-    final colorScheme = Theme.of(context).colorScheme;
     final tiltMagnitude = (pitch.abs() + roll.abs()) / 2;
-
     Color chipColor;
     String label;
-
     if (tiltMagnitude < 5) {
-      chipColor = Colors.greenAccent;
+      chipColor = DashboardTheme.accentGreen;
       label = 'Stable';
     } else if (tiltMagnitude < 15) {
-      chipColor = Colors.orangeAccent;
+      chipColor = DashboardTheme.accentYellow;
       label = 'Leaning';
     } else {
-      chipColor = Colors.redAccent;
+      chipColor = DashboardTheme.accentRed;
       label = 'At Risk';
     }
-
     return Container(
       padding: const EdgeInsets.symmetric(horizontal: 10, vertical: 6),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(999),
-        color: chipColor.withOpacity(0.15),
+        color: chipColor.withOpacity(0.2),
         border: Border.all(color: chipColor, width: 1),
       ),
       child: Row(
@@ -115,7 +105,7 @@ class ImuPanel extends StatelessWidget {
           Text(
             label.toUpperCase(),
             style: TextStyle(
-              fontSize: 11,
+              fontSize: 10,
               fontWeight: FontWeight.w700,
               letterSpacing: 1.1,
               color: chipColor,
@@ -133,34 +123,15 @@ class ImuPanel extends StatelessWidget {
     required IconData icon,
     required Color color,
   }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    Color valueColor = colorScheme.onSurface;
-    if (value.abs() > 15) {
-      valueColor = Colors.redAccent;
-    } else if (value.abs() > 5) {
-      valueColor = Colors.orangeAccent;
-    } else {
-      valueColor = Colors.greenAccent;
-    }
-
+    Color valueColor = DashboardTheme.accentGreen;
+    if (value.abs() > 15) valueColor = DashboardTheme.accentRed;
+    else if (value.abs() > 5) valueColor = DashboardTheme.accentYellow;
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(16),
-        gradient: LinearGradient(
-          begin: Alignment.topLeft,
-          end: Alignment.bottomRight,
-          colors: [
-            color.withOpacity(0.08),
-            color.withOpacity(0.02),
-          ],
-        ),
-        border: Border.all(
-          color: color.withOpacity(0.7),
-          width: 1,
-        ),
+        color: color.withOpacity(0.1),
+        border: Border.all(color: color.withOpacity(0.5), width: 1),
       ),
       child: Row(
         children: [
@@ -169,7 +140,7 @@ class ImuPanel extends StatelessWidget {
             height: 32,
             decoration: BoxDecoration(
               borderRadius: BorderRadius.circular(999),
-              color: color.withOpacity(0.18),
+              color: color.withOpacity(0.2),
             ),
             child: Icon(icon, color: color, size: 18),
           ),
@@ -180,15 +151,17 @@ class ImuPanel extends StatelessWidget {
               children: [
                 Text(
                   label.toUpperCase(),
-                  style: theme.textTheme.labelSmall?.copyWith(
+                  style: TextStyle(
+                    fontSize: 10,
                     letterSpacing: 1.1,
-                    color: colorScheme.onSurfaceVariant,
+                    color: Colors.white.withOpacity(0.5),
                   ),
                 ),
                 const SizedBox(height: 4),
                 Text(
                   '${value.toStringAsFixed(1)}°',
-                  style: theme.textTheme.titleLarge?.copyWith(
+                  style: TextStyle(
+                    fontSize: 20,
                     fontWeight: FontWeight.w700,
                     color: valueColor,
                   ),
@@ -209,21 +182,15 @@ class ImuPanel extends StatelessWidget {
     double z, {
     required Color accent,
   }) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     Widget buildAxis(String label, double value, Color color) {
       final magnitude = value.abs().clamp(0.0, 1.0);
-
       return Expanded(
         child: Column(
           crossAxisAlignment: CrossAxisAlignment.start,
           children: [
             Text(
               '$prefix$label',
-              style: theme.textTheme.labelSmall?.copyWith(
-                color: colorScheme.onSurfaceVariant,
-              ),
+              style: TextStyle(fontSize: 10, color: Colors.white.withOpacity(0.5)),
             ),
             const SizedBox(height: 4),
             ClipRRect(
@@ -231,15 +198,17 @@ class ImuPanel extends StatelessWidget {
               child: LinearProgressIndicator(
                 value: magnitude,
                 minHeight: 6,
-                backgroundColor: colorScheme.surfaceVariant.withOpacity(0.6),
+                backgroundColor: Colors.white.withOpacity(0.1),
                 valueColor: AlwaysStoppedAnimation<Color>(color),
               ),
             ),
             const SizedBox(height: 4),
             Text(
               value.toStringAsFixed(3),
-              style: theme.textTheme.bodySmall?.copyWith(
+              style: TextStyle(
+                fontSize: 11,
                 fontFeatures: const [FontFeature.tabularFigures()],
+                color: Colors.white.withOpacity(0.8),
               ),
             ),
           ],

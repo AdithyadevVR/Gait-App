@@ -1,5 +1,7 @@
 import 'package:flutter/material.dart';
-import 'sensor_card.dart';
+import 'package:google_fonts/google_fonts.dart';
+import '../theme/dashboard_theme.dart';
+import 'sensor_data_card.dart';
 
 class FootPressureSummary extends StatelessWidget {
   final double leftPressure;
@@ -17,12 +19,9 @@ class FootPressureSummary extends StatelessWidget {
 
   @override
   Widget build(BuildContext context) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
-    return SensorCard(
-      title: 'Foot Pressure',
-      subtitle: 'Total load and distribution',
+    return SensorDataCard(
+      title: 'Pressure distribution',
+      subtitle: 'Total load and balance',
       icon: Icons.balance,
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
@@ -35,7 +34,7 @@ class FootPressureSummary extends StatelessWidget {
                   'Left',
                   leftPressure,
                   leftPressurePercent,
-                  Colors.cyanAccent,
+                  DashboardTheme.accentCyan,
                 ),
               ),
               const SizedBox(width: 12),
@@ -45,7 +44,7 @@ class FootPressureSummary extends StatelessWidget {
                   'Right',
                   rightPressure,
                   rightPressurePercent,
-                  Colors.deepPurpleAccent,
+                  DashboardTheme.accentPurple,
                 ),
               ),
             ],
@@ -53,8 +52,9 @@ class FootPressureSummary extends StatelessWidget {
           const SizedBox(height: 12),
           Text(
             'Pressure percentage',
-            style: theme.textTheme.labelMedium?.copyWith(
-              color: colorScheme.onSurfaceVariant,
+            style: GoogleFonts.inter(
+              fontSize: 12,
+              color: Colors.white.withOpacity(0.5),
             ),
           ),
           const SizedBox(height: 6),
@@ -65,7 +65,7 @@ class FootPressureSummary extends StatelessWidget {
                 child: Container(
                   height: 10,
                   decoration: BoxDecoration(
-                    color: Colors.cyanAccent.withOpacity(0.8),
+                    color: DashboardTheme.accentCyan.withOpacity(0.9),
                     borderRadius: const BorderRadius.horizontal(left: Radius.circular(4)),
                   ),
                 ),
@@ -75,7 +75,7 @@ class FootPressureSummary extends StatelessWidget {
                 child: Container(
                   height: 10,
                   decoration: BoxDecoration(
-                    color: Colors.deepPurpleAccent.withOpacity(0.8),
+                    color: DashboardTheme.accentPurple.withOpacity(0.9),
                     borderRadius: const BorderRadius.horizontal(right: Radius.circular(4)),
                   ),
                 ),
@@ -88,15 +88,11 @@ class FootPressureSummary extends StatelessWidget {
             children: [
               Text(
                 'Left ${(leftPressurePercent * 100).toStringAsFixed(1)}%',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withOpacity(0.6)),
               ),
               Text(
                 'Right ${(rightPressurePercent * 100).toStringAsFixed(1)}%',
-                style: theme.textTheme.labelSmall?.copyWith(
-                  color: colorScheme.onSurfaceVariant,
-                ),
+                style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withOpacity(0.6)),
               ),
             ],
           ),
@@ -112,38 +108,33 @@ class FootPressureSummary extends StatelessWidget {
     double percent,
     Color accent,
   ) {
-    final theme = Theme.of(context);
-    final colorScheme = theme.colorScheme;
-
     return Container(
       padding: const EdgeInsets.all(12),
       decoration: BoxDecoration(
         borderRadius: BorderRadius.circular(12),
-        color: colorScheme.surface.withOpacity(0.6),
-        border: Border.all(color: accent.withOpacity(0.6)),
+        color: DashboardTheme.surfaceCard.withOpacity(0.6),
+        border: Border.all(color: accent.withOpacity(0.4)),
       ),
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
           Text(
             '$label pressure',
-            style: theme.textTheme.labelSmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: GoogleFonts.inter(fontSize: 11, color: Colors.white.withOpacity(0.5)),
           ),
           const SizedBox(height: 4),
           Text(
             '${pressureKg.toStringAsFixed(2)} kg',
-            style: theme.textTheme.titleMedium?.copyWith(
+            style: GoogleFonts.inter(
+              fontSize: 18,
               fontWeight: FontWeight.w700,
+              color: Colors.white,
             ),
           ),
           const SizedBox(height: 4),
           Text(
             '${(percent * 100).toStringAsFixed(1)}% of total',
-            style: theme.textTheme.bodySmall?.copyWith(
-              color: colorScheme.onSurfaceVariant,
-            ),
+            style: GoogleFonts.inter(fontSize: 12, color: Colors.white.withOpacity(0.6)),
           ),
         ],
       ),
