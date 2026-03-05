@@ -56,6 +56,51 @@ class SensorData {
     return math.atan2(ay, math.sqrt(ax * ax + az * az)) * (180 / math.pi);
   }
 
+  // --- Foot pressure (total per foot) ---
+  double get leftPressure => leftHeelKg + leftBallKg + leftToeKg;
+  double get rightPressure => rightHeelKg + rightBallKg + rightToeKg;
+
+  double get totalPressure => leftPressure + rightPressure;
+
+  // Pressure distribution percentage (0..1); 0.5 each if total is 0
+  double get leftPressurePercent =>
+      totalPressure > 0 ? leftPressure / totalPressure : 0.5;
+  double get rightPressurePercent =>
+      totalPressure > 0 ? rightPressure / totalPressure : 0.5;
+
+  // --- Heel / ball / toe ratios per foot (0..1) ---
+  double get leftHeelRatio =>
+      leftPressure > 0 ? leftHeelKg / leftPressure : 0;
+  double get leftBallRatio =>
+      leftPressure > 0 ? leftBallKg / leftPressure : 0;
+  double get leftToeRatio =>
+      leftPressure > 0 ? leftToeKg / leftPressure : 0;
+
+  double get rightHeelRatio =>
+      rightPressure > 0 ? rightHeelKg / rightPressure : 0;
+  double get rightBallRatio =>
+      rightPressure > 0 ? rightBallKg / rightPressure : 0;
+  double get rightToeRatio =>
+      rightPressure > 0 ? rightToeKg / rightPressure : 0;
+
+  // --- Step symmetry (timing difference in seconds) ---
+  double get stepSymmetry => (leftStepTime - rightStepTime).abs();
+
+  // --- Cadence difference (steps/min) ---
+  double get cadenceDiff => (leftCadence - rightCadence).abs();
+
+  // --- Gait warnings (thresholds: 60% overload, heel > 0.7, toe > 0.6, step sym > 0.2s, cadence diff > 10) ---
+  List<String> get gaitWarnings {
+    final list = <String>[];
+    if (leftPressurePercent > 0.60) list.add('Left Foot Overloading');
+    if (rightPressurePercent > 0.60) list.add('Right Foot Overloading');
+    if (leftHeelRatio > 0.7 || rightHeelRatio > 0.7) list.add('Heel Dominant Strike');
+    if (leftToeRatio > 0.6 || rightToeRatio > 0.6) list.add('Forefoot Dominant Strike');
+    if (stepSymmetry > 0.2) list.add('Uneven Step Timing');
+    if (cadenceDiff > 10) list.add('Cadence Imbalance');
+    return list;
+  }
+
   // Helper function to convert ADC to KG
   static double _adcToKg(double adc) {
     return (adc / 4095.0) * 20.0;

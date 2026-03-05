@@ -2,8 +2,11 @@ import 'package:flutter/material.dart';
 import '../models/sensor_data.dart';
 import '../services/websocket_service.dart';
 import '../widgets/foot_pressure_panel.dart';
-import '../widgets/imu_panel.dart';
+import '../widgets/foot_pressure_summary.dart';
+import '../widgets/foot_strike_panel.dart';
 import '../widgets/gait_metrics_panel.dart';
+import '../widgets/imu_panel.dart';
+import '../widgets/warnings_panel.dart';
 import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
@@ -187,7 +190,14 @@ class _DashboardScreenState extends State<DashboardScreen> {
                           ),
                         ],
                       ),
-                      const SizedBox(height: 24),
+                      const SizedBox(height: 16),
+                      FootPressureSummary(
+                        leftPressure: data.leftPressure,
+                        rightPressure: data.rightPressure,
+                        leftPressurePercent: data.leftPressurePercent,
+                        rightPressurePercent: data.rightPressurePercent,
+                      ),
+                      const SizedBox(height: 16),
                       GaitMetricsPanel(
                         leftStepCount: data.leftSteps,
                         rightStepCount: data.rightSteps,
@@ -195,7 +205,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                         rightStepTime: data.rightStepTime,
                         leftCadence: data.leftCadence,
                         rightCadence: data.rightCadence,
+                        stepSymmetry: data.stepSymmetry,
                       ),
+                      const SizedBox(height: 16),
+                      FootStrikePanel(
+                        leftHeelRatio: data.leftHeelRatio,
+                        leftBallRatio: data.leftBallRatio,
+                        leftToeRatio: data.leftToeRatio,
+                        rightHeelRatio: data.rightHeelRatio,
+                        rightBallRatio: data.rightBallRatio,
+                        rightToeRatio: data.rightToeRatio,
+                      ),
+                      const SizedBox(height: 16),
+                      WarningsPanel(warnings: data.gaitWarnings),
                     ],
                   ),
                 ),
@@ -241,6 +263,13 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   isRightFoot: true,
                 ),
                 const SizedBox(height: 16),
+                FootPressureSummary(
+                  leftPressure: data.leftPressure,
+                  rightPressure: data.rightPressure,
+                  leftPressurePercent: data.leftPressurePercent,
+                  rightPressurePercent: data.rightPressurePercent,
+                ),
+                const SizedBox(height: 16),
                 GaitMetricsPanel(
                   leftStepCount: data.leftSteps,
                   rightStepCount: data.rightSteps,
@@ -248,7 +277,19 @@ class _DashboardScreenState extends State<DashboardScreen> {
                   rightStepTime: data.rightStepTime,
                   leftCadence: data.leftCadence,
                   rightCadence: data.rightCadence,
+                  stepSymmetry: data.stepSymmetry,
                 ),
+                const SizedBox(height: 16),
+                FootStrikePanel(
+                  leftHeelRatio: data.leftHeelRatio,
+                  leftBallRatio: data.leftBallRatio,
+                  leftToeRatio: data.leftToeRatio,
+                  rightHeelRatio: data.rightHeelRatio,
+                  rightBallRatio: data.rightBallRatio,
+                  rightToeRatio: data.rightToeRatio,
+                ),
+                const SizedBox(height: 16),
+                WarningsPanel(warnings: data.gaitWarnings),
                 const SizedBox(height: 16),
                 ImuPanel(
                   pitch: data.pitchDeviation,

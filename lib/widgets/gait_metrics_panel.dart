@@ -8,6 +8,7 @@ class GaitMetricsPanel extends StatelessWidget {
   final double rightStepTime;
   final double leftCadence;
   final double rightCadence;
+  final double stepSymmetry;
 
   const GaitMetricsPanel({
     super.key,
@@ -17,6 +18,7 @@ class GaitMetricsPanel extends StatelessWidget {
     required this.rightStepTime,
     required this.leftCadence,
     required this.rightCadence,
+    this.stepSymmetry = 0,
   });
 
   @override
@@ -64,8 +66,28 @@ class GaitMetricsPanel extends StatelessWidget {
           ),
           const SizedBox(height: 16),
           Text(
-            'Symmetry',
+            'Step symmetry',
             style: theme.textTheme.labelLarge?.copyWith(
+              color: colorScheme.onSurfaceVariant,
+            ),
+          ),
+          const SizedBox(height: 6),
+          Row(
+            children: [
+              Icon(Icons.timelapse, size: 18, color: colorScheme.primary),
+              const SizedBox(width: 8),
+              Text(
+                'Timing difference: ${stepSymmetry.toStringAsFixed(2)} s',
+                style: theme.textTheme.bodyMedium?.copyWith(
+                  fontWeight: FontWeight.w500,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 12),
+          Text(
+            'Step count distribution',
+            style: theme.textTheme.labelMedium?.copyWith(
               color: colorScheme.onSurfaceVariant,
             ),
           ),
