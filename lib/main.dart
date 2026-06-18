@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'screens/login_screen.dart';
-import 'services/websocket_service.dart';
+import 'services/connection_service.dart';
 
 void main() {
   runApp(const GaitApp());
@@ -14,17 +14,17 @@ class GaitApp extends StatefulWidget {
 }
 
 class _GaitAppState extends State<GaitApp> {
-  late final WebSocketService _webSocketService;
+  late final ConnectionService _connectionService;
 
   @override
   void initState() {
     super.initState();
-    _webSocketService = WebSocketService();
+    _connectionService = ConnectionService();
   }
 
   @override
   void dispose() {
-    _webSocketService.dispose();
+    _connectionService.dispose();
     super.dispose();
   }
 
@@ -46,7 +46,7 @@ class _GaitAppState extends State<GaitApp> {
           iconTheme: IconThemeData(color: Colors.white),
         ),
       ),
-      home: LoginScreen(webSocketService: _webSocketService),
+      home: LoginScreen(connectionService: _connectionService),
     );
   }
 }

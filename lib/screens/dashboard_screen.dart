@@ -1,7 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:google_fonts/google_fonts.dart';
 import '../models/sensor_data.dart';
-import '../services/websocket_service.dart';
+import '../services/connection_service.dart';
 import '../theme/dashboard_theme.dart';
 import '../widgets/foot_heatmap_widget.dart';
 import '../widgets/foot_pressure_summary.dart';
@@ -12,9 +12,9 @@ import '../widgets/warnings_panel.dart';
 import 'login_screen.dart';
 
 class DashboardScreen extends StatefulWidget {
-  final WebSocketService webSocketService;
+  final ConnectionService connectionService;
 
-  const DashboardScreen({super.key, required this.webSocketService});
+  const DashboardScreen({super.key, required this.connectionService});
 
   @override
   State<DashboardScreen> createState() => _DashboardScreenState();
@@ -43,7 +43,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
                 _buildHeader(context),
                 Expanded(
                   child: StreamBuilder<SensorData>(
-                    stream: widget.webSocketService.dataStream,
+                    stream: widget.connectionService.dataStream,
                     builder: (context, snapshot) {
                       if (snapshot.hasData) _latestData = snapshot.data;
                       if (_latestData == null) return _buildLoadingState();
@@ -100,23 +100,36 @@ class _DashboardScreenState extends State<DashboardScreen> {
 
   Widget _buildConnectionStatus() {
     return StreamBuilder<ConnectionStatus>(
-      stream: widget.webSocketService.statusStream,
+      stream: widget.connectionService.statusStream,
       builder: (context, snapshot) {
         final status = snapshot.data ?? ConnectionStatus.disconnected;
+        final isWebSocket = widget.connectionService.currentType == ConnectionType.websocket;
+        final displayType = isWebSocket ? 'WebSocket' : 'Serial';
+
         Color color;
         IconData icon;
+        String statusText;
+
         switch (status) {
           case ConnectionStatus.connected:
             color = DashboardTheme.accentGreen;
-            icon = Icons.wifi;
+            icon = isWebSocket ? Icons.wifi : Icons.usb;
+            statusText = '$displayType Connected';
             break;
           case ConnectionStatus.connecting:
             color = DashboardTheme.accentYellow;
-            icon = Icons.wifi_find;
+            icon = isWebSocket ? Icons.wifi_find : Icons.cable;
+            statusText = 'Connecting...';
+            break;
+          case ConnectionStatus.error:
+            color = DashboardTheme.accentRed;
+            icon = Icons.error_outline;
+            statusText = 'Connection Error';
             break;
           default:
             color = DashboardTheme.accentRed;
-            icon = Icons.wifi_off;
+            icon = isWebSocket ? Icons.wifi_off : Icons.usb_off;
+            statusText = '$displayType Disconnected';
         }
         return Container(
           padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 8),
@@ -140,7 +153,7 @@ class _DashboardScreenState extends State<DashboardScreen> {
               Icon(icon, color: color, size: 18),
               const SizedBox(width: 8),
               Text(
-                status.name.toUpperCase(),
+                statusText.toUpperCase(),
                 style: GoogleFonts.inter(
                   fontSize: 11,
                   fontWeight: FontWeight.w700,
@@ -439,12 +452,12 @@ class _DashboardScreenState extends State<DashboardScreen> {
   }
 
   void _navigateBack() {
-    widget.webSocketService.disconnect();
+    widget.connectionService.disconnect();
     Navigator.pushReplacement(
       context,
       MaterialPageRoute(
         builder: (context) => LoginScreen(
-          webSocketService: widget.webSocketService,
+          connectionService: widget.connectionService,
         ),
       ),
     );
